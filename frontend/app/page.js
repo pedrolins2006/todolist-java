@@ -1,6 +1,11 @@
 "use client";
-import TopicList from "@/components/TopicList";
 
 export default function Home() {
-  return <TopicList />;
+  return (
+    <>
+      <div>
+        <h1>Lista de Tarefas</h1>
+      </div>
+    </>
+  );
 }

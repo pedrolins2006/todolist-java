@@ -1,6 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,7 +24,6 @@ export default function RootLayout({ children }) {
         cz-shortcut-listen="true"
       >
         <div className="container max-w-3xl mx-auto p-4">
-          <Navbar />
           <main className="mt-4">{children}</main>
         </div>
       </body>
