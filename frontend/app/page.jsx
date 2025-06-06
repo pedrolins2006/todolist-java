@@ -6,6 +6,8 @@ import { Check, Send, SquarePen, Trash2, Undo, X } from "lucide-react";
 import React, { useEffect } from "react";
 
 export default function Home() {
+  const [editTaskId, setEditTaskId] = React.useState(null);
+  const [editDesc, setEditDesc] = React.useState("");
   const [taskList, setTaskList] = React.useState([]);
   const [isEditing, setIsEditing] = React.useState(false);
 
@@ -26,7 +28,7 @@ export default function Home() {
       },
       {
         id: 3,
-        descricao: "Completar pedro r projeto de front-end ",
+        descricao: "Completar o projeto de front-end ",
         concluida: false,
         dtCriacao: "05/06/2025, 15:07",
       },
@@ -36,6 +38,40 @@ export default function Home() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    //remove espacos em branco no início e no final
+    // if (!inputTask.trim()) return;
+  };
+
+  const toggleTaskDesc = (id) => {
+    setIsEditing(!isEditing);
+    if (id) {
+      setEditTaskId(id);
+      const task = taskList.find((task) => task.id === id);
+      if (task) {
+        // setInputTask(task.descricao);
+        setEditDesc(task.descricao);
+      }
+    } else {
+      setEditTaskId(null);
+      setEditDesc("");
+    }
+  };
+
+  const completeTask = (id) => {
+    console.log("Concluir tarefa com id:", id);
+    setTaskList((prev) =>
+      prev.map((task) => (task.id === id ? { ...task, concluida: true } : task))
+    );
+  };
+
+  const undoTask = (id) => {
+    console.log("Reverter tarefa com id:", id);
+    setTaskList((prev) =>
+      prev.map((task) =>
+        task.id === id ? { ...task, concluida: false } : task
+      )
+    );
   };
 
   // shadcn =  usar toast, alertDialog
@@ -52,7 +88,7 @@ export default function Home() {
 
         <TaskForm>
           <form
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={(e) => handleSubmit(e)}
             className="flex flex-col gap-4"
           >
             <div className="flex justify-between items-center">
@@ -82,59 +118,77 @@ export default function Home() {
             {taskList?.map((task) => (
               <li
                 key={task.id}
-                className="flex items-center justify-between p-3 bg-white rounded shadow"
+                className={`flex items-center justify-between p-3 bg-white rounded shadow transition-opacity duration-200`}
               >
-                <div className="flex gap-2 items-center w-full min-w-0">
+                <div className="flex gap-4 items-center w-full min-w-0">
                   <input
                     type="checkbox"
                     disabled={true}
                     checked={task.concluida}
                     className=""
                   />
-                  {!isEditing ? (
-                    <div>
-                      <div>
+                  {editTaskId === task.id ? (
+                    <div className="flex-1 min-w-0 w-full items-center">
+                      <div className="flex items-center w-full">
                         <input
                           type="text"
-                          value={task.descricao}
-                          disabled
-                          readOnly
-                          className="w-full overflow-hidden text-ellipsis px-2 py-1 rounded"
-                        ></input>
-                        <div>
-                          <button>
-                            <Check />
+                          value={editDesc}
+                          onChange={(e) => setEditDesc(e.target.value)}
+                          autoFocus
+                          className="w-full overflow-hidden text-ellipsis py-1 rounded border"
+                        />
+                        <div className="flex gap-1 items-center ml-2">
+                          <button
+                            className="text-white bg-green-500 hover:bg-green-600 transition-colors duration-200 cursor-pointer px-3 py-2 rounded-lg"
+                            onClick={() => {
+                              setTaskList((prev) =>
+                                prev.map((t) =>
+                                  t.id === task.id
+                                    ? { ...t, descricao: editDesc }
+                                    : t
+                                )
+                              );
+                              setEditTaskId(null);
+                            }}
+                          >
+                            <Check size={16} />
                           </button>
-                          <button>
-                            <X />
+                          <button
+                            className="text-neutral-500 hover:bg-neutral-100 transition-colors duration-200 cursor-pointer px-3 py-2 rounded-lg border border-neutral-300"
+                            onClick={() => (
+                              setEditTaskId(null), setIsEditing(false)
+                            )}
+                          >
+                            <X size={16} />
                           </button>
                         </div>
                       </div>
-                      <div>
-                        <span className="text-xs text-neutral-500">
-                          Criada em: {task.dtCriacao}
-                        </span>
-                      </div>
                     </div>
                   ) : (
-                    <div>
-                      <div>
+                    <div className="flex flex-col ">
+                      <div className="text-left">
                         {!task.concluida ? (
                           <input
                             type="text"
                             value={task.descricao}
                             disabled
                             readOnly
-                            className="w-full overflow-hidden text-ellipsis px-2 py-1 rounded"
-                          ></input>
+                            className="w-full overflow-hidden text-ellipsis py-1 rounded"
+                          />
                         ) : (
-                          <s className="w-full block px-2 py-1 overflow-hidden text-ellipsis whitespace-nowrap rounded">
-                            {task.descricao}
-                          </s>
+                          <div className="opacity-50">
+                            <s className="w-full block  py-1 overflow-hidden text-ellipsis whitespace-nowrap rounded opcacity-50">
+                              {task.descricao}
+                            </s>
+                          </div>
                         )}
                       </div>
                       <div>
-                        <span className="text-xs text-neutral-500">
+                        <span
+                          className={`text-xs text-neutral-500 ${
+                            task.concluida ? "opacity-50" : ""
+                          }`}
+                        >
                           Criada em: {task.dtCriacao}
                         </span>
                       </div>
@@ -143,35 +197,49 @@ export default function Home() {
                 </div>
 
                 {/* action buttons */}
-                <div className="flex gap-2 mr-2">
-                  {!isEditing ? (
+                {!isEditing && editTaskId !== task.id && (
+                  <div className="flex gap-2 mr-2">
                     <button
-                      title="Concluir"
-                      className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 transition-colors duration-200 cursor-pointer p-2 rounded-lg"
+                      title="Concluir ou reverter"
+                      // onClick={() => toggleConcluida(task.id)}
+                      className={`${
+                        task.concluida
+                          ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                          : "text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                      } transition-colors duration-200 cursor-pointer p-2 rounded-lg`}
                     >
-                      <Undo size={15} />
+                      {task.concluida ? (
+                        <Undo size={15} onClick={() => undoTask(task.id)} />
+                      ) : (
+                        <Send size={15} onClick={() => completeTask(task.id)} />
+                      )}
                     </button>
-                  ) : (
+
                     <button
-                      title="Concluir"
-                      className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 transition-colors duration-200 cursor-pointer p-2 rounded-lg"
+                      title="Editar"
+                      disabled={task.concluida}
+                      onClick={() => {
+                        setEditTaskId(task.id);
+                        setEditDesc(task.descricao);
+                      }}
+                      className={`${
+                        task.concluida
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      } transition-colors duration-200 p-2 rounded-lg`}
                     >
-                      <Send size={15} />
+                      <SquarePen size={15} onClick={() => toggleTaskDesc()} />
                     </button>
-                  )}
-                  <button
-                    title="Editar"
-                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors duration-200 cursor-pointer p-2 rounded-lg"
-                  >
-                    <SquarePen size={15} />
-                  </button>
-                  <button
-                    title="Excluir"
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 cursor-pointer p-2 rounded-lg"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
+
+                    <button
+                      title="Excluir"
+                      onClick={() => deleteTask(task.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200 cursor-pointer p-2 rounded-lg"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
